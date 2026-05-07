@@ -42,6 +42,13 @@ public class ListaProdutos {
         return produtos;
     }
 
+    // Retorna um array com os preços do produto nos 3 supermercados: [bistek, giassi, fort]
+    public float[] precosNosTres(Produto produto) {
+        Produto produtoGiassi = produtoComEAN(produto.getEan(), giassi);
+        Produto produtoFort = produtoComEAN(produto.getEan(), fort);
+        return new float[]{ produto.getPreco(), produtoGiassi.getPreco(), produtoFort.getPreco() };
+    }
+
     public String descricaoComPrecosNosTres(Produto produto) {
         Produto produtoGiassi = produtoComEAN(produto.getEan(), giassi);
         Produto produtoFort = produtoComEAN(produto.getEan(), fort);

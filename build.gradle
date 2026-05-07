@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 group = 'proj1'
@@ -21,6 +22,26 @@ dependencies {
     testCompileOnly("org.projectlombok:lombok:1.18.46")
     testAnnotationProcessor("org.projectlombok:lombok:1.18.46")
 }
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+
+compileJava.options.compilerArgs += ['--enable-preview', '--release', '25']
+run.jvmArgs += ['--enable-preview']
+
+
+application {
+    mainClass = 'Main'
+}
+
+// Permite que o programa leia do teclado quando rodado via gradlew run
+run {
+    standardInput = System.in
+}
+
 
 test {
     useJUnitPlatform()
