@@ -1,5 +1,10 @@
 # Manual de Utilização — Comparador de Preços de Supermercados
 
+## Estrutura de dados
+
+- A ListaSequencial foi escolhida pois apresenta uma facilidade na inserção de dados no final dela e pela eficiência no acesso a elementos
+- Foi identificado um ponto crítico na parte do construtor de ComparadorProdutos onde houve a oportunidade de usar ordenação para busca binária, mas não obtivemos bons resultados por se tratar de uma lista relativamente pequena onde o custo de ordenar e depois procurar não fez nenhuma diferença
+
 ## Descrição
 
 Este programa realiza a busca de produtos nos supermercados Bistek, Giassi e Fort Atacadista, permitindo ao usuário montar uma cesta de compras virtual e identificar qual supermercado oferece o menor custo total para os itens selecionados.
