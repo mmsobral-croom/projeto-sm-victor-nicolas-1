@@ -25,12 +25,19 @@ void main() {
         if (nomeProduto.isEmpty()) {
             IO.println("Produto não informado.");
         } else {
+//            trecho comentado para verificação de performance
+//            long inicio = System.nanoTime();
+
             // Agrupa os resultados dos 3 supermercados para comparar por EAN
             ComparadorProdutos comparador = new ComparadorProdutos(
                     bistek.busca(nomeProduto),
                     giassi.busca(nomeProduto),
                     fort.busca(nomeProduto)
             );
+
+//            long fim = System.nanoTime();
+//            double tempoSegundos = (fim - inicio) / 1_000_000_000.0;
+//            IO.println("Tempo: " + tempoSegundos + "s");
 
             ListaSequencial<ProdutoComparado> produtos = comparador.produtosComEANNosTres();
 
