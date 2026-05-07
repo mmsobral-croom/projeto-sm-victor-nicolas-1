@@ -44,19 +44,34 @@ void main() {
             mostraMenuProdutos(produtos);
 
             if (!produtos.esta_vazia()) {
-                IO.print("Escolha uma opção: ");
-                int opcao = teclado.nextInt();
-                teclado.nextLine();
+                IO.print("Escolha as opções (ex: 1,3,5 ou 'todos'): ");
+                String entrada = teclado.nextLine().trim();
 
-                if (opcao < 1 || opcao > produtos.comprimento()) {
-                    IO.println("Opção inválida.");
+                ListaSequencial<Integer> opcoes = new ListaSequencial<>();
+
+                if (entrada.equalsIgnoreCase("todos")) {
+                    for (int i = 1; i <= produtos.comprimento(); i++) opcoes.adiciona(i);
                 } else {
-                    // Converte ProdutoComparado em ItemCesta e adiciona na cesta
-                    ItemCesta item = produtos.obtem(opcao - 1).toItemCesta();
-                    cesta.adiciona(item);
+                    String[] partes = entrada.split(",");
+                    for (String parte : partes) {
+                        try {
+                            int op = Integer.parseInt(parte.trim());
+                            if (op >= 1 && op <= produtos.comprimento()) opcoes.adiciona(op);
+                            else IO.println("Opção inválida ignorada: " + op);
+                        } catch (NumberFormatException e) {
+                            IO.println("Valor inválido ignorado: " + parte.trim());
+                        }
+                    }
+                }
 
-                    IO.println("Produto adicionado na cesta:");
-                    IO.println(item.descricao());
+                if (opcoes.esta_vazia()) {
+                    IO.println("Nenhuma opção válida selecionada.");
+                } else {
+                    for (int i = 0; i < opcoes.comprimento(); i++) {
+                        ItemCesta item = produtos.obtem(opcoes.obtem(i) - 1).toItemCesta();
+                        cesta.adiciona(item);
+                        IO.println("Adicionado: " + item.descricao());
+                    }
                 }
             }
         }
