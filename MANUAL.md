@@ -11,6 +11,14 @@ Este programa realiza a busca de produtos nos supermercados Bistek, Giassi e For
 
 ---
 
+## Cache de Buscas
+
+Para otimizar o tempo de resposta e evitar requisições redundantes aos servidores dos supermercados, o sistema possui um mecanismo de cache local:
+- **Armazenamento**: Os termos pesquisados e os dados básicos dos produtos encontrados (como `id`, `nome`, `marca` e `ean`) são salvos localmente em arquivos JSON no diretório raiz (ex: `cache_giassi.json`, `cache_bistek.json` e `cache_fort.json`).
+- **Atualização em Tempo Real**: Quando um termo já existente no cache é pesquisado de novo, o programa lê as informações estáticas do cache e realiza uma consulta rápida por ID aos supermercados. Isso garante que os preços e a disponibilidade dos produtos estejam sempre atualizados para a comparação de valores, sem a necessidade de reprocessar uma busca por termo inteira.
+
+---
+
 ## Requisitos para Execução
 
 - Java 25 ou superior instalado
