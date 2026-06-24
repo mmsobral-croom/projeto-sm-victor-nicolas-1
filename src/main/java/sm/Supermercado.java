@@ -2,7 +2,6 @@ package sm;
 
 import esd.ListaSequencial;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -13,6 +12,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Spliterator;
@@ -25,6 +25,7 @@ public class Supermercado {
 
     HttpClient cliente;
     String url;
+    CacheBuscas cache;
     final Pattern re_resources = Pattern.compile("(\\d+)-(\\d+)/(\\d+)", Pattern.CASE_INSENSITIVE);
     final int query_len = 40;
 
@@ -39,6 +40,10 @@ public class Supermercado {
             this.produtos = produtos;
             this.total = total;
             this.sm = sm;
+        }
+
+        public ListaSequencial<Produto> getProdutos() {
+            return produtos;
         }
 
         @Override
@@ -88,7 +93,7 @@ public class Supermercado {
         class Iterador implements Iterator<Produto> {
             int total;
             int inicio = 0;
-            //            int pos = 0;
+//            int pos = 0;
             ListaSequencial<Produto> produtos;
 
             Iterador(ListaSequencial<Produto> produtos, int total) {
@@ -125,9 +130,10 @@ public class Supermercado {
         }
     }
 
-    public Supermercado(String url)  {
+    public Supermercado(String url, CacheBuscas cache)  {
         cliente = HttpClient.newHttpClient();
         this.url = url+ "/api/catalog_system/pub/products/search/";
+        this.cache = cache;
     }
 
     String make_url(String produto, int inicio) {
@@ -143,11 +149,17 @@ public class Supermercado {
         return sb.toString();
     }
 
-    String make_get_url(String produtoId) {
+    String make_get_url(String... ids) {
         StringBuilder sb = new StringBuilder();
         sb.append(this.url);
-        sb.append("?fq=productId:");
-        sb.append(produtoId);
+        sb.append("?");
+        boolean naoPrimeiro = false;
+        for (var produtoId: ids) {
+            if (naoPrimeiro) sb.append("&");
+            else naoPrimeiro = true;
+            sb.append("fq=productId:");
+            sb.append(produtoId);
+        }
 
         return sb.toString();
     }
@@ -171,7 +183,7 @@ public class Supermercado {
             }
         } catch (URISyntaxException e) {
 
-        }
+            }
 
         return response;
     }
@@ -217,21 +229,73 @@ public class Supermercado {
         return paginas;
     }
 
-    public Resultado busca(String produto) {
-        Resultado res = null;
 
+    public Resultado busca(String produto) {
+        String key = produto.toLowerCase().trim();
+        ListaSequencial<Produto> cachedList = cache.obtem(key);
+        if (cachedList != null) {
+            ListaSequencial<String> ids = new ListaSequencial<>();
+            for (int i = 0; i < cachedList.comprimento(); i++) {
+                ids.adiciona(cachedList.obtem(i).getId());
+            }
+            ListaSequencial<Produto> freshList = obtem(ids);
+            return new Resultado(this, produto, freshList, freshList.comprimento());
+        }
+
+        Resultado res = null;
         HttpResponse<String> response = envia(make_url(produto, 0));
         if (response != null) {
             int status = response.statusCode();
             if (status == 200 || status == 206) {
                 ListaSequencial<Produto> r = extrai_produtos(response);
-
                 int[] faixa = obtem_info_paginas(response);
-
-                res = new Resultado(this, produto, r, faixa[2]);
+                int total = faixa[2];
+                int inicio = r.comprimento();
+                while (inicio < total) {
+                    var mais_produtos = busca_proximo(produto, inicio);
+                    if (mais_produtos != null && !mais_produtos.esta_vazia()) {
+                        for (int j = 0; j < mais_produtos.comprimento(); j++) {
+                            r.adiciona(mais_produtos.obtem(j));
+                        }
+                        inicio += mais_produtos.comprimento();
+                    } else {
+                        break;
+                    }
+                }
+                cache.adiciona(key, r);
+                res = new Resultado(this, produto, r, r.comprimento());
             }
         }
         return res;
+    }
+
+    private static final int MAX_QUERY_LEN = 40;
+
+    public ListaSequencial<Produto> obtem(String... ids) {
+        ListaSequencial<Produto> res = new ListaSequencial<>();
+        // precisa paginar as buscas, pois a API tem um limite of 50 itens por consulta
+        for (int j=0; j < ids.length; j += Supermercado.MAX_QUERY_LEN) {
+            var args = Arrays.copyOfRange(ids, j, Math.min(j+Supermercado.MAX_QUERY_LEN, ids.length));
+            HttpResponse<String> response = envia(make_get_url(args));
+            if (response != null) {
+                int status = response.statusCode();
+                if (status == 200 || status == 206) {
+                    var prods = extrai_produtos(response);
+                    for (int k=0; k < prods.comprimento(); k++) {
+                        res.adiciona(prods.obtem(k));
+                    }
+                }
+            }
+        }
+        return res;
+    }
+
+    public ListaSequencial<Produto> obtem(ListaSequencial<String> ids) {
+        String[] args = new String[ids.comprimento()];
+        for (int j=0; j < ids.comprimento(); j++) {
+            args[j] = ids.obtem(j);
+        }
+        return obtem(args);
     }
 
     public Produto obtem(String produto_id) {

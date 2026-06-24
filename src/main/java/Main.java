@@ -10,9 +10,9 @@ import java.util.Scanner;
 void main() {
     Scanner teclado = new Scanner(System.in);
 
-    Giassi giassi = new Giassi();
-    Bistek bistek = new Bistek();
-    Fort fort = new Fort();
+    Giassi giassi = new Giassi(new CacheBuscas("giassi"));
+    Bistek bistek = new Bistek(new CacheBuscas("bistek"));
+    Fort fort = new Fort(new CacheBuscas("fort"));
 
     // Cesta armazena itens estruturados (nome + preços por supermercado)
     ListaSequencial<ItemCesta> cesta = new ListaSequencial<>();
